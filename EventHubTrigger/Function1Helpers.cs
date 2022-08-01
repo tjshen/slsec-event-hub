@@ -29,7 +29,7 @@ namespace EventHubTrigger
                 InstrumentationKey = "29ea7836-3136-4989-938b-2763383acfa6"
             };
             var tokenProvider = new AzureServiceTokenProvider();
-            var token = await tokenProvider?.GetAccessTokenAsync("https://rp.core.security.dev1.azure.com/") ??
+            var token = await tokenProvider.GetAccessTokenAsync("https://rp.core.security.dev1.azure.com/") ??
                         string.Empty;
 
             foreach (EventData eventData in events)
