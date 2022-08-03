@@ -7,10 +7,12 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using EventHubTrigger.Entity;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Azure.Services.AppAuthentication;
+using Newtonsoft.Json;
 
 namespace EventHubTrigger
 {
@@ -31,18 +33,22 @@ namespace EventHubTrigger
             var tokenProvider = new AzureServiceTokenProvider();
             var token = await tokenProvider.GetAccessTokenAsync("https://rp.core.security.dev1.azure.com/") ??
                         string.Empty;
-
             foreach (EventData eventData in events)
             {
                 try
                 {
                     // Replace these two lines with your processing logic.
-                    log.LogInformation($"C# Event Hub trigger function processed a message: {eventData.EventBody}");
+                    log.LogInformation("C# Event Hub trigger function processed a message: {EventDataEventBody}", eventData.EventBody);
+                    _telemetryClient.TrackTrace($"C# event hub message properties is: {eventData.Properties}");
                     _telemetryClient.TrackTrace($"C# Event Hub trigger function processed a message: {eventData.EventBody}", SeverityLevel.Information);
                     HttpClient client = new HttpClient();
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
                     var resp = await client.GetStringAsync(URI);
-                    _telemetryClient.TrackTrace($"response string from api is: {resp}");
+                    var results = JsonConvert.DeserializeObject<List<InternalPricingConfig>>(resp);
+                    foreach (var r in results)
+                    {
+                        _telemetryClient.TrackTrace($"response string from api is: {r.SubscriptionId}");
+                    }
                     await Task.Yield();
                 }
                 catch (Exception e)

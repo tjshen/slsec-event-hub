@@ -1,12 +1,13 @@
+using System;
 using System.Collections.Generic;
 
 namespace EventHubTrigger.Entity;
 
 public class InternalPricingConfig
 {
-    public string SubScriptionId { get; set; }
+    public Guid SubscriptionId { get; set; }
     
-    public string TenantId { get; set; }
+    public Guid TenantId { get; set; }
     
     public string RegistrationState { get; set; }
     
