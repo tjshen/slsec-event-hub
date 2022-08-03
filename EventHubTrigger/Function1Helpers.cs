@@ -7,10 +7,12 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using Azure.Data.Tables;
 using EventHubTrigger.Entity;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Services.AppAuthentication;
 using Newtonsoft.Json;
 
@@ -22,6 +24,10 @@ namespace EventHubTrigger
 
         private static readonly string URI =
             "https://rp.core.security.dev1.azure.com:8443/internal/enrichedPricingConfigurations?BundleNames=AppServices";
+        private static readonly string COSMOS_URI = "https://tjcosmos.documents.azure.com:443/";
+        private static readonly string COSMOS_KEY =
+            "pMbwB4sfauWIW2faMgp9una7eEfA4MAlmI95lpvI2obhVcD6Bq5OnzxDk8cUs4JnP1ZJhra1idvE446SscmIXQ==";
+        
         [FunctionName("Function1")]
         public static async Task Run([EventHubTrigger("glob-rp-core-dev1-prc-eh", Connection = "AzureEventHubConnectionString")] EventData[] events, ILogger log)
         {
@@ -30,6 +36,18 @@ namespace EventHubTrigger
             {
                 InstrumentationKey = "29ea7836-3136-4989-938b-2763383acfa6"
             };
+            
+            CosmosClient cosmosClient = new CosmosClient(COSMOS_URI, COSMOS_KEY);
+            Database database = await cosmosClient.CreateDatabaseIfNotExistsAsync(
+                id: "testdb"
+            );
+            
+            Container container = await database.CreateContainerIfNotExistsAsync(
+                id: "TenantIdMapping",
+                partitionKeyPath: "/subscriptionId",
+                throughput: 400
+            );
+            
             var tokenProvider = new AzureServiceTokenProvider();
             var token = await tokenProvider.GetAccessTokenAsync("https://rp.core.security.dev1.azure.com/") ??
                         string.Empty;
@@ -48,6 +66,12 @@ namespace EventHubTrigger
                     foreach (var r in results)
                     {
                         _telemetryClient.TrackTrace($"response string from api is: {r.SubscriptionId}");
+                        var m = new Mapping(Guid.NewGuid().ToString(), r.SubscriptionId.ToString(), r.TenantId.ToString());
+                        var createdItem = await container.UpsertItemAsync<Mapping>(
+                            item: m,
+                            partitionKey: new PartitionKey(r.SubscriptionId.ToString())
+                        );
+                        
                     }
                     await Task.Yield();
                 }
