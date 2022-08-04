@@ -24,7 +24,7 @@ namespace EventHubTrigger
 
         private static readonly string URI =
             "https://rp.core.security.dev1.azure.com:8443/internal/enrichedPricingConfigurations?BundleNames=AppServices";
-        private static readonly string COSMOS_URI = "https://tjcosmos.documents.azure.com:443/";
+        private static readonly string COSMOS_URI = Environment.GetEnvironmentVariable("COSMOS_URI")!;
         private static readonly string COSMOS_KEY = Environment.GetEnvironmentVariable("COSMOS_KEY")!;
         
         [FunctionName("Function1")]
