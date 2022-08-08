@@ -75,6 +75,7 @@ namespace EventHubTrigger
                         _telemetryClient.TrackTrace($"Feed result is {feed}");
                         while (feed.HasMoreResults)
                         {
+                            _telemetryClient.TrackTrace($"Start to process feed result.");
                             FeedResponse<Mapping> cur = await feed.ReadNextAsync();
                             foreach(Mapping ma in cur)
                             {
