@@ -24,7 +24,7 @@ namespace EventHubTrigger
         private static readonly string URI =
             "https://rp.core.security.dev1.azure.com:8443/internal/enrichedPricingConfigurations?BundleNames=AppServices";
         private static readonly string COSMOS_URI = Environment.GetEnvironmentVariable("COSMOS_URI")!;
-        private static readonly string COSMOS_KEY = "Njuh2QLzcMTweoKSjbaqLpHKjayA0NOtWUKmTcUrunNxZGMger7HcCDEXb2zHtH4lcQufoOyYpisii1MtBwkYA==";
+        private static readonly string COSMOS_KEY = Environment.GetEnvironmentVariable("COSMOS_KEY")!;
         
         [FunctionName("Function1")]
         public static async Task Run([EventHubTrigger("glob-rp-core-dev1-prc-eh", Connection = "AzureEventHubConnectionString")] EventData[] events, ILogger log)
